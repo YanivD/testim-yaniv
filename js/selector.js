@@ -14,10 +14,11 @@ function isUnique(selector) {
 function getUniqueSelector(el) {
     let selector = getSingleNodeSelector(el);
 
+    let parent = el.parentNode;
     while (isUnique(selector) === false) {
-        const parent = el.parentNode;
         const parentSelector = getSingleNodeSelector(parent);
         selector = `${parentSelector} > ${selector}`;
+        parent = parent.parentNode;
     }
 
     return selector;
