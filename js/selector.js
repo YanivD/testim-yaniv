@@ -45,7 +45,7 @@ function getSelectorCombinationsByLength(selectorsByElement, length) {
     }
 
     // Remove unnecessary spaces
-    return relevantSelectors.map(selector => selector.trim().replace(/  /g, ' '));
+    return relevantSelectors.map(selector => selector.trim().replace(/  +/g, ' '));
 }
 
 function getSubArrays(array) {
