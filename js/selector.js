@@ -1,4 +1,4 @@
-function getSingleNodeSelectors(el, withoutEmpty) {
+function getSingleNodeSelectors(el) {
     const attributesSelectors = Array.from(el.attributes).map(function (attribute) {
         return `[${attribute.name}='${attribute.value.replace(/'/g, "\\'")}']`;
     });
@@ -11,12 +11,8 @@ function getSingleNodeSelectors(el, withoutEmpty) {
         `:nth-child(${nodeIndex + 1})`
     ];
 
-    let optionalSelectors = getSubArrays(nodeSelectors)
+    const optionalSelectors = getSubArrays(nodeSelectors)
         .sort((a, b) => a.length - b.length);
-
-    if (withoutEmpty) {
-        optionalSelectors = optionalSelectors.filter(Boolean).splice(0, 1);
-    }
 
     return optionalSelectors;
 }
@@ -63,7 +59,7 @@ function isUnique(selector) {
 
 function getAllPathSelectors(el) {
     const targetElementSelectors = getSingleNodeSelectors(el).slice(1);
-    let allPathSelectors = [targetElementSelectors];
+    const allPathSelectors = [targetElementSelectors];
 
     let parent = el.parentNode;
     while (parent.tagName !== 'HTML') {
