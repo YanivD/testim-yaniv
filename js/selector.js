@@ -1,10 +1,60 @@
-function getSingleNodeSelector(el) {
+function getSingleNodeSelectors(el, withoutEmpty) {
     const attributesSelectors = Array.from(el.attributes).map(function (attribute) {
         return `[${attribute.name}='${attribute.value.replace(/'/g, "\\'")}']`;
     });
 
     const nodeIndex = Array.from(el.parentNode.children).indexOf(el);
-    return `${el.tagName}${attributesSelectors.join('')}:nth-child(${nodeIndex + 1})`;
+
+    const nodeSelectors = [
+        el.tagName,
+        ...attributesSelectors,
+        `:nth-child(${nodeIndex + 1})`
+    ];
+
+    let optionalSelectors = getSubArrays(nodeSelectors)
+        .sort((a, b) => a.length - b.length);
+
+    if (withoutEmpty) {
+        optionalSelectors = optionalSelectors.filter(Boolean).splice(0, 1);
+    }
+
+    return optionalSelectors;
+}
+
+function getSelectorCombinationsByLength(selectorsByElement, length) {
+    if (length === 0) {
+        return [];
+    }
+
+    const relevantSelectors = [];
+    if (selectorsByElement.length === 1) {
+        for (const selectors of selectorsByElement[0]) {
+            if (selectors.length === length) {
+                relevantSelectors.push(selectors.join(''));
+            }
+        }
+    } else {
+        for (const selectors of selectorsByElement[0]) {
+            if (selectors.length <= length) {
+                const options = getSelectorCombinationsByLength(selectorsByElement.slice(1), length - selectors.length);
+                for (const option of options) {
+                    relevantSelectors.push(selectors.join('') + ' ' + option);
+                }
+            }
+        }
+    }
+
+    // Remove unnecessary spaces
+    return relevantSelectors.map(selector => selector.trim().replace(/  /g, ' '));
+}
+
+function getSubArrays(array) {
+    return array.reduce(
+        (subsets, value) => subsets.concat(
+            subsets.map(set => [...set, value])
+        ),
+        [[]]
+    );
 }
 
 function isUnique(selector) {
@@ -12,16 +62,30 @@ function isUnique(selector) {
 }
 
 function getUniqueSelector(el) {
-    let selector = getSingleNodeSelector(el);
+    const targetElementSelectors = getSingleNodeSelectors(el).slice(1);
+    let allPathSelectors = [targetElementSelectors];
 
     let parent = el.parentNode;
-    while (isUnique(selector) === false) {
-        const parentSelector = getSingleNodeSelector(parent);
-        selector = `${parentSelector} > ${selector}`;
+    while (parent.tagName !== 'HTML') {
+        const parentSelector = getSingleNodeSelectors(parent);
+        allPathSelectors.push(parentSelector);
         parent = parent.parentNode;
     }
 
-    return selector;
+    let maxSelectorsCount = 0;
+    for (const nodeSelector of allPathSelectors) {
+        maxSelectorsCount += nodeSelector[nodeSelector.length - 1].length;
+    }
+
+    allPathSelectors = allPathSelectors.reverse();
+    for (let selectorsCount = 1; selectorsCount < maxSelectorsCount; selectorsCount++) {
+        const selectors = getSelectorCombinationsByLength(allPathSelectors, selectorsCount);
+        for (const selector of selectors) {
+            if (isUnique(selector)) {
+                return selector;
+            }
+        }
+    }
 }
 
 export {getUniqueSelector as getUniqueSelector};
