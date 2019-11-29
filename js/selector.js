@@ -61,7 +61,7 @@ function isUnique(selector) {
     return document.querySelectorAll(selector).length === 1;
 }
 
-function getUniqueSelector(el) {
+function getAllPathSelectors(el) {
     const targetElementSelectors = getSingleNodeSelectors(el).slice(1);
     let allPathSelectors = [targetElementSelectors];
 
@@ -72,12 +72,17 @@ function getUniqueSelector(el) {
         parent = parent.parentNode;
     }
 
+    return allPathSelectors.reverse();
+}
+
+function getUniqueSelector(el) {
+    const allPathSelectors = getAllPathSelectors(el);
+
     let maxSelectorsCount = 0;
     for (const nodeSelector of allPathSelectors) {
         maxSelectorsCount += nodeSelector[nodeSelector.length - 1].length;
     }
 
-    allPathSelectors = allPathSelectors.reverse();
     for (let selectorsCount = 1; selectorsCount < maxSelectorsCount; selectorsCount++) {
         const selectors = getSelectorCombinationsByLength(allPathSelectors, selectorsCount);
         for (const selector of selectors) {
